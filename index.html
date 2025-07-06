@@ -1,0 +1,2639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 架构设计师 - 专业版</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+        }
+        
+        .sidebar {
+            width: 320px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border-right: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .toolbar {
+            background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+            padding: 12px;
+            border-bottom: 1px solid #475569;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .toolbar-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .toolbar-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .tool-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+        }
+        
+        .tool-btn:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+        }
+        
+        .tool-btn.active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+        }
+        
+        .tool-btn.secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+        
+        .tool-btn.secondary:hover {
+            background: linear-gradient(135deg, #5b6570 0%, #374151 100%);
+        }
+        
+        .component-library {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        
+        .component-category {
+            margin-bottom: 20px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #334155;
+        }
+        
+        .category-title {
+            color: #60a5fa;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .component-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .component-item {
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: grab;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-size: 11px;
+            color: #d1d5db;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .component-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .component-item:hover {
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+            border-color: #60a5fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            color: #ffffff;
+        }
+        
+        .component-item:hover::before {
+            left: 100%;
+        }
+        
+        .component-item:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+        
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .top-toolbar {
+            background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+            padding: 12px 16px;
+            border-bottom: 1px solid #475569;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0f0f0f 100%);
+            overflow: hidden;
+        }
+        
+        #canvas {
+            cursor: crosshair;
+            display: block;
+        }
+        
+        .properties-panel {
+            width: 300px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border-left: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .properties-header {
+            background: linear-gradient(90deg, #334155 0%, #1e293b 100%);
+            padding: 16px;
+            border-bottom: 1px solid #475569;
+        }
+        
+        .properties-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        
+        .property-group {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #334155;
+        }
+        
+        .property-group h3 {
+            color: #60a5fa;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .property-item {
+            margin-bottom: 12px;
+        }
+        
+        .property-item label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        
+        .property-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .property-input:focus {
+            outline: none;
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+        }
+        
+        .color-input {
+            width: 100%;
+            height: 40px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            cursor: pointer;
+        }
+        
+        .minimap {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: rgba(30, 41, 59, 0.9);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            backdrop-filter: blur(10px);
+        }
+        
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .zoom-btn:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            transform: scale(1.05);
+        }
+        
+        .context-menu {
+            position: absolute;
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .context-menu-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #d1d5db;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .context-menu-item:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: #ffffff;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #334155;
+            border-top: 3px solid #60a5fa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .template-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .template-modal-content {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 800px;
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #334155;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .template-item {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        
+        .template-item:hover {
+            border-color: #60a5fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+        
+        .connection-line {
+            stroke: #60a5fa;
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
+        }
+        
+        .connection-line.selected {
+            stroke: #fbbf24;
+            stroke-width: 3;
+        }
+        
+        .connection-point {
+            fill: #60a5fa;
+            stroke: #1e293b;
+            stroke-width: 2;
+            r: 4;
+            cursor: pointer;
+        }
+        
+        .connection-point:hover {
+            fill: #fbbf24;
+            r: 6;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 左侧工具栏和组件库 -->
+        <div class="sidebar">
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button class="tool-btn active" id="selectTool" title="选择工具 (V)">
+                        <i class="fas fa-mouse-pointer"></i> 选择
+                    </button>
+                    <button class="tool-btn" id="moveTool" title="移动工具 (M)">
+                        <i class="fas fa-arrows-alt"></i> 移动
+                    </button>
+                    <button class="tool-btn" id="connectTool" title="连接工具 (C)">
+                        <i class="fas fa-link"></i> 连接
+                    </button>
+                    <button class="tool-btn" id="textTool" title="文本工具 (T)">
+                        <i class="fas fa-font"></i> 文本
+                    </button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="tool-btn secondary" id="undoBtn" title="撤销 (Ctrl+Z)">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button class="tool-btn secondary" id="redoBtn" title="重做 (Ctrl+Y)">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                    <button class="tool-btn secondary" id="templateBtn" title="模板库">
+                        <i class="fas fa-layer-group"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="component-library">
+                <div class="component-category">
+                    <div class="category-title">
+                        <i class="fas fa-shapes"></i>
+                        基础形状
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="rectangle">
+                            <i class="far fa-square"></i><br>矩形
+                        </div>
+                        <div class="component-item" draggable="true" data-type="circle">
+                            <i class="far fa-circle"></i><br>圆形
+                        </div>
+                        <div class="component-item" draggable="true" data-type="ellipse">
+                            <i class="fas fa-ellipsis-h"></i><br>椭圆
+                        </div>
+                        <div class="component-item" draggable="true" data-type="triangle">
+                            <i class="fas fa-play"></i><br>三角形
+                        </div>
+                        <div class="component-item" draggable="true" data-type="diamond">
+                            <i class="far fa-gem"></i><br>菱形
+                        </div>
+                        <div class="component-item" draggable="true" data-type="pentagon">
+                            <i class="fas fa-stop"></i><br>五边形
+                        </div>
+                        <div class="component-item" draggable="true" data-type="hexagon">
+                            <i class="fas fa-stop"></i><br>六边形
+                        </div>
+                        <div class="component-item" draggable="true" data-type="star">
+                            <i class="fas fa-star"></i><br>星形
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component-category">
+                    <div class="category-title">
+                        <i class="fas fa-brain"></i>
+                        AI基础组件
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="token">
+                            <i class="fas fa-cube"></i><br>Token
+                        </div>
+                        <div class="component-item" draggable="true" data-type="embedding">
+                            <i class="fas fa-vector-square"></i><br>Embedding
+                        </div>
+                        <div class="component-item" draggable="true" data-type="relu">
+                            <i class="fas fa-chart-line"></i><br>ReLU
+                        </div>
+                        <div class="component-item" draggable="true" data-type="gelu">
+                            <i class="fas fa-wave-square"></i><br>GELU
+                        </div>
+                        <div class="component-item" draggable="true" data-type="layernorm">
+                            <i class="fas fa-balance-scale"></i><br>LayerNorm
+                        </div>
+                        <div class="component-item" draggable="true" data-type="dropout">
+                            <i class="fas fa-times-circle"></i><br>Dropout
+                        </div>
+                        <div class="component-item" draggable="true" data-type="linear">
+                            <i class="fas fa-minus"></i><br>Linear
+                        </div>
+                        <div class="component-item" draggable="true" data-type="projection">
+                            <i class="fas fa-expand-arrows-alt"></i><br>投影层
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component-category">
+                    <div class="category-title">
+                        <i class="fas fa-eye"></i>
+                        注意力机制
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="self-attention">
+                            <i class="fas fa-compress"></i><br>Self-Attention
+                        </div>
+                        <div class="component-item" draggable="true" data-type="multi-head">
+                            <i class="fas fa-layer-group"></i><br>Multi-Head
+                        </div>
+                        <div class="component-item" draggable="true" data-type="cross-attention">
+                            <i class="fas fa-exchange-alt"></i><br>Cross-Attention
+                        </div>
+                        <div class="component-item" draggable="true" data-type="masked-attention">
+                            <i class="fas fa-mask"></i><br>Masked Attention
+                        </div>
+                        <div class="component-item" draggable="true" data-type="flash-attention">
+                            <i class="fas fa-bolt"></i><br>Flash Attention
+                        </div>
+                        <div class="component-item" draggable="true" data-type="positional-encoding">
+                            <i class="fas fa-map-marker"></i><br>位置编码
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component-category">
+                    <div class="category-title">
+                        <i class="fas fa-network-wired"></i>
+                        神经网络层
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="dense">
+                            <i class="fas fa-th"></i><br>全连接层
+                        </div>
+                        <div class="component-item" draggable="true" data-type="conv1d">
+                            <i class="fas fa-grip-lines"></i><br>Conv1D
+                        </div>
+                        <div class="component-item" draggable="true" data-type="conv2d">
+                            <i class="fas fa-th-large"></i><br>Conv2D
+                        </div>
+                        <div class="component-item" draggable="true" data-type="maxpool">
+                            <i class="fas fa-compress-alt"></i><br>MaxPool
+                        </div>
+                        <div class="component-item" draggable="true" data-type="avgpool">
+                            <i class="fas fa-equals"></i><br>AvgPool
+                        </div>
+                        <div class="component-item" draggable="true" data-type="batchnorm">
+                            <i class="fas fa-align-center"></i><br>BatchNorm
+                        </div>
+                        <div class="component-item" draggable="true" data-type="residual">
+                            <i class="fas fa-plus"></i><br>残差连接
+                        </div>
+                        <div class="component-item" draggable="true" data-type="skip">
+                            <i class="fas fa-forward"></i><br>跳跃连接
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component-category">
+                    <div class="category-title">
+                        <i class="fas fa-robot"></i>
+                        LLM专用组件
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="transformer">
+                            <i class="fas fa-magic"></i><br>Transformer
+                        </div>
+                        <div class="component-item" draggable="true" data-type="encoder">
+                            <i class="fas fa-compress-arrows-alt"></i><br>编码器
+                        </div>
+                        <div class="component-item" draggable="true" data-type="decoder">
+                            <i class="fas fa-expand-arrows-alt"></i><br>解码器
+                        </div>
+                        <div class="component-item" draggable="true" data-type="causal-mask">
+                            <i class="fas fa-shield-alt"></i><br>因果掩码
+                        </div>
+                        <div class="component-item" draggable="true" data-type="kv-cache">
+                            <i class="fas fa-database"></i><br>KV缓存
+                        </div>
+                        <div class="component-item" draggable="true" data-type="vocab-embedding">
+                            <i class="fas fa-book"></i><br>词表嵌入
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component-category">
+                    <div class="category-title">
+                        <i class="fas fa-project-diagram"></i>
+                        多模态组件
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="text-encoder">
+                            <i class="fas fa-font"></i><br>文本编码器
+                        </div>
+                        <div class="component-item" draggable="true" data-type="vision-encoder">
+                            <i class="fas fa-camera"></i><br>视觉编码器
+                        </div>
+                        <div class="component-item" draggable="true" data-type="audio-encoder">
+                            <i class="fas fa-microphone"></i><br>音频编码器
+                        </div>
+                        <div class="component-item" draggable="true" data-type="modal-fusion">
+                            <i class="fas fa-code-branch"></i><br>模态融合
+                        </div>
+                        <div class="component-item" draggable="true" data-type="clip-alignment">
+                            <i class="fas fa-link"></i><br>CLIP对齐
+                        </div>
+                        <div class="component-item" draggable="true" data-type="feature-projection">
+                            <i class="fas fa-arrows-alt"></i><br>特征投影
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component-category">
+                    <div class="category-title">
+                        <i class="fas fa-th-large"></i>
+                        CNN专用组件
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="resnet-block">
+                            <i class="fas fa-cubes"></i><br>ResNet块
+                        </div>
+                        <div class="component-item" draggable="true" data-type="inception">
+                            <i class="fas fa-sitemap"></i><br>Inception
+                        </div>
+                        <div class="component-item" draggable="true" data-type="mobilenet">
+                            <i class="fas fa-mobile-alt"></i><br>MobileNet
+                        </div>
+                        <div class="component-item" draggable="true" data-type="feature-pyramid">
+                            <i class="fas fa-mountain"></i><br>特征金字塔
+                        </div>
+                        <div class="component-item" draggable="true" data-type="backbone">
+                            <i class="fas fa-bars"></i><br>骨干网络
+                        </div>
+                        <div class="component-item" draggable="true" data-type="upsample">
+                            <i class="fas fa-expand-alt"></i><br>上采样
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component-category">
+                    <div class="category-title">
+                        <i class="fas fa-search"></i>
+                        目标检测组件
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="yolo-head">
+                            <i class="fas fa-bullseye"></i><br>YOLO Head
+                        </div>
+                        <div class="component-item" draggable="true" data-type="fpn">
+                            <i class="fas fa-layer-group"></i><br>FPN
+                        </div>
+                        <div class="component-item" draggable="true" data-type="panet">
+                            <i class="fas fa-project-diagram"></i><br>PANet
+                        </div>
+                        <div class="component-item" draggable="true" data-type="bifpn">
+                            <i class="fas fa-exchange-alt"></i><br>BiFPN
+                        </div>
+                        <div class="component-item" draggable="true" data-type="nms">
+                            <i class="fas fa-filter"></i><br>NMS
+                        </div>
+                        <div class="component-item" draggable="true" data-type="anchor">
+                            <i class="fas fa-anchor"></i><br>Anchor
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component-category">
+                    <div class="category-title">
+                        <i class="fas fa-arrow-right"></i>
+                        连接元素
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="arrow">
+                            <i class="fas fa-arrow-right"></i><br>箭头
+                        </div>
+                        <div class="component-item" draggable="true" data-type="double-arrow">
+                            <i class="fas fa-exchange-alt"></i><br>双向箭头
+                        </div>
+                        <div class="component-item" draggable="true" data-type="data-flow">
+                            <i class="fas fa-stream"></i><br>数据流
+                        </div>
+                        <div class="component-item" draggable="true" data-type="gradient-flow">
+                            <i class="fas fa-angle-double-down"></i><br>梯度流
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主画布区域 -->
+        <div class="main-area">
+            <div class="top-toolbar">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-xl font-bold text-white">AI 架构设计师</h1>
+                    <div class="flex items-center gap-2">
+                        <select class="property-input" id="themeSelector">
+                            <option value="dark">深色主题</option>
+                            <option value="light">明亮主题</option>
+                            <option value="contrast">高对比度</option>
+                            <option value="custom">自定义</option>
+                        </select>
+                        <button class="tool-btn" id="gridToggle" title="显示/隐藏网格">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="tool-btn" id="snapToggle" title="启用/禁用吸附">
+                            <i class="fas fa-magnet"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="tool-btn" id="saveBtn" title="保存项目">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                    <button class="tool-btn" id="loadBtn" title="加载项目">
+                        <i class="fas fa-folder-open"></i> 加载
+                    </button>
+                    <button class="tool-btn" id="exportBtn" title="导出">
+                        <i class="fas fa-download"></i> 导出
+                    </button>
+                    <button class="tool-btn" id="shareBtn" title="分享">
+                        <i class="fas fa-share"></i> 分享
+                    </button>
+                </div>
+            </div>
+            
+            <div class="canvas-container">
+                <canvas id="canvas"></canvas>
+                
+                <!-- 小地图 -->
+                <div class="minimap">
+                    <canvas id="minimap-canvas"></canvas>
+                </div>
+                
+                <!-- 缩放控制 -->
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoomIn" title="放大">+</button>
+                    <button class="zoom-btn" id="zoomOut" title="缩小">-</button>
+                    <button class="zoom-btn" id="zoomFit" title="适应画布">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <button class="zoom-btn" id="zoomReset" title="重置缩放">
+                        <i class="fas fa-home"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧属性面板 -->
+        <div class="properties-panel">
+            <div class="properties-header">
+                <h3 class="text-lg font-semibold text-white">属性面板</h3>
+            </div>
+            
+            <div class="properties-content">
+                <div class="property-group">
+                    <h3><i class="fas fa-cog"></i> 基本属性</h3>
+                    <div class="property-item">
+                        <label>名称</label>
+                        <input type="text" class="property-input" id="prop-name" placeholder="组件名称">
+                    </div>
+                    <div class="property-item">
+                        <label>描述</label>
+                        <textarea class="property-input" id="prop-description" rows="2" placeholder="组件描述"></textarea>
+                    </div>
+                </div>
+                
+                <div class="property-group">
+                    <h3><i class="fas fa-paint-brush"></i> 外观样式</h3>
+                    <div class="property-item">
+                        <label>填充颜色</label>
+                        <input type="color" class="color-input" id="prop-fill" value="#3b82f6">
+                    </div>
+                    <div class="property-item">
+                        <label>边框颜色</label>
+                        <input type="color" class="color-input" id="prop-stroke" value="#1e40af">
+                    </div>
+                    <div class="property-item">
+                        <label>边框宽度</label>
+                        <input type="range" class="property-input" id="prop-stroke-width" min="0" max="10" value="2">
+                    </div>
+                    <div class="property-item">
+                        <label>透明度</label>
+                        <input type="range" class="property-input" id="prop-opacity" min="0" max="100" value="100">
+                    </div>
+                </div>
+                
+                <div class="property-group">
+                    <h3><i class="fas fa-expand-alt"></i> 尺寸位置</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="property-item">
+                            <label>X坐标</label>
+                            <input type="number" class="property-input" id="prop-x" value="0">
+                        </div>
+                        <div class="property-item">
+                            <label>Y坐标</label>
+                            <input type="number" class="property-input" id="prop-y" value="0">
+                        </div>
+                        <div class="property-item">
+                            <label>宽度</label>
+                            <input type="number" class="property-input" id="prop-width" value="100">
+                        </div>
+                        <div class="property-item">
+                            <label>高度</label>
+                            <input type="number" class="property-input" id="prop-height" value="60">
+                        </div>
+                    </div>
+                    <div class="property-item">
+                        <label>旋转角度</label>
+                        <input type="range" class="property-input" id="prop-rotation" min="0" max="360" value="0">
+                    </div>
+                </div>
+                
+                <div class="property-group">
+                    <h3><i class="fas fa-font"></i> 文本样式</h3>
+                    <div class="property-item">
+                        <label>文本内容</label>
+                        <input type="text" class="property-input" id="prop-text" placeholder="输入文本">
+                    </div>
+                    <div class="property-item">
+                        <label>字体大小</label>
+                        <input type="number" class="property-input" id="prop-font-size" value="14" min="8" max="72">
+                    </div>
+                    <div class="property-item">
+                        <label>字体颜色</label>
+                        <input type="color" class="color-input" id="prop-text-color" value="#ffffff">
+                    </div>
+                    <div class="property-item">
+                        <label>文本对齐</label>
+                        <select class="property-input" id="prop-text-align">
+                            <option value="center">居中</option>
+                            <option value="left">左对齐</option>
+                            <option value="right">右对齐</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="property-group">
+                    <h3><i class="fas fa-tools"></i> 操作</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="tool-btn" id="duplicateBtn">
+                            <i class="fas fa-copy"></i> 复制
+                        </button>
+                        <button class="tool-btn" id="deleteBtn">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                        <button class="tool-btn" id="groupBtn">
+                            <i class="fas fa-object-group"></i> 组合
+                        </button>
+                        <button class="tool-btn" id="ungroupBtn">
+                            <i class="fas fa-object-ungroup"></i> 取消组合
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="property-group">
+                    <h3><i class="fas fa-layer-group"></i> 图层</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="tool-btn" id="bringToFrontBtn">
+                            <i class="fas fa-arrow-up"></i> 置顶
+                        </button>
+                        <button class="tool-btn" id="sendToBackBtn">
+                            <i class="fas fa-arrow-down"></i> 置底
+                        </button>
+                        <button class="tool-btn" id="lockBtn">
+                            <i class="fas fa-lock"></i> 锁定
+                        </button>
+                        <button class="tool-btn" id="hideBtn">
+                            <i class="fas fa-eye-slash"></i> 隐藏
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 右键菜单 -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" data-action="copy">
+            <i class="fas fa-copy"></i> 复制
+        </div>
+        <div class="context-menu-item" data-action="paste">
+            <i class="fas fa-paste"></i> 粘贴
+        </div>
+        <div class="context-menu-item" data-action="delete">
+            <i class="fas fa-trash"></i> 删除
+        </div>
+        <div class="context-menu-item" data-action="duplicate">
+            <i class="fas fa-clone"></i> 重复
+        </div>
+        <div class="context-menu-item" data-action="group">
+            <i class="fas fa-object-group"></i> 组合
+        </div>
+        <div class="context-menu-item" data-action="ungroup">
+            <i class="fas fa-object-ungroup"></i> 取消组合
+        </div>
+    </div>
+    
+    <!-- 模板对话框 -->
+    <div class="template-modal" id="templateModal">
+        <div class="template-modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-white">选择模板</h2>
+                <button class="tool-btn" id="closeTemplateModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="template-grid" id="templateGrid">
+                <!-- 模板项将动态生成 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- 加载遮罩 -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="text-center">
+            <div class="loading-spinner"></div>
+            <p class="mt-4 text-white">正在处理...</p>
+        </div>
+    </div>
+
+    <script>
+        class AIDesignerApp {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.minimapCanvas = document.getElementById('minimap-canvas');
+                this.minimapCtx = this.minimapCanvas.getContext('2d');
+                
+                // 应用状态
+                this.elements = [];
+                this.selectedElements = [];
+                this.connections = [];
+                this.currentTool = 'select';
+                this.history = [];
+                this.historyIndex = -1;
+                this.clipboard = [];
+                
+                // 画布状态
+                this.scale = 1;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                this.showGrid = true;
+                this.snapToGrid = true;
+                this.gridSize = 20;
+                
+                // 交互状态
+                this.isDragging = false;
+                this.isConnecting = false;
+                this.dragStart = { x: 0, y: 0 };
+                this.connectionStart = null;
+                this.hoveredElement = null;
+                
+                // 主题配置
+                this.themes = {
+                    dark: {
+                        background: '#0f0f0f',
+                        grid: '#333333',
+                        text: '#ffffff',
+                        primary: '#3b82f6',
+                        secondary: '#1e40af'
+                    },
+                    light: {
+                        background: '#ffffff',
+                        grid: '#e5e7eb',
+                        text: '#000000',
+                        primary: '#3b82f6',
+                        secondary: '#1e40af'
+                    },
+                    contrast: {
+                        background: '#000000',
+                        grid: '#666666',
+                        text: '#ffffff',
+                        primary: '#ffff00',
+                        secondary: '#ff6600'
+                    }
+                };
+                this.currentTheme = 'dark';
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupCanvas();
+                this.setupEventListeners();
+                this.setupDragAndDrop();
+                this.setupPropertyPanel();
+                this.setupToolbar();
+                this.setupKeyboardShortcuts();
+                this.setupTemplates();
+                this.render();
+                
+                // 添加示例元素
+                this.addExampleElements();
+            }
+            
+            setupCanvas() {
+                const container = this.canvas.parentElement;
+                this.resizeCanvas();
+                
+                // 小地图设置
+                this.minimapCanvas.width = 200;
+                this.minimapCanvas.height = 150;
+                
+                window.addEventListener('resize', () => this.resizeCanvas());
+            }
+            
+            resizeCanvas() {
+                const container = this.canvas.parentElement;
+                this.canvas.width = container.clientWidth;
+                this.canvas.height = container.clientHeight;
+                this.render();
+            }
+            
+            setupEventListeners() {
+                // 鼠标事件
+                this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+                this.canvas.addEventListener('wheel', (e) => this.handleWheel(e));
+                this.canvas.addEventListener('dblclick', (e) => this.handleDoubleClick(e));
+                this.canvas.addEventListener('contextmenu', (e) => this.handleContextMenu(e));
+                
+                // 全局事件
+                document.addEventListener('mouseup', () => this.isDragging = false);
+                document.addEventListener('click', (e) => this.hideContextMenu(e));
+            }
+            
+            setupDragAndDrop() {
+                const componentItems = document.querySelectorAll('.component-item');
+                componentItems.forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', e.target.dataset.type);
+                        e.dataTransfer.effectAllowed = 'copy';
+                    });
+                });
+                
+                this.canvas.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'copy';
+                });
+                
+                this.canvas.addEventListener('drop', (e) => this.handleDrop(e));
+            }
+            
+            setupPropertyPanel() {
+                const inputs = document.querySelectorAll('.property-input');
+                inputs.forEach(input => {
+                    input.addEventListener('input', (e) => this.updateSelectedProperties(e));
+                });
+                
+                // 操作按钮
+                document.getElementById('duplicateBtn').addEventListener('click', () => this.duplicateSelected());
+                document.getElementById('deleteBtn').addEventListener('click', () => this.deleteSelected());
+                document.getElementById('groupBtn').addEventListener('click', () => this.groupSelected());
+                document.getElementById('ungroupBtn').addEventListener('click', () => this.ungroupSelected());
+                document.getElementById('bringToFrontBtn').addEventListener('click', () => this.bringToFront());
+                document.getElementById('sendToBackBtn').addEventListener('click', () => this.sendToBack());
+                document.getElementById('lockBtn').addEventListener('click', () => this.toggleLock());
+                document.getElementById('hideBtn').addEventListener('click', () => this.toggleVisibility());
+            }
+            
+            setupToolbar() {
+                // 工具选择
+                document.getElementById('selectTool').addEventListener('click', () => this.setTool('select'));
+                document.getElementById('moveTool').addEventListener('click', () => this.setTool('move'));
+                document.getElementById('connectTool').addEventListener('click', () => this.setTool('connect'));
+                document.getElementById('textTool').addEventListener('click', () => this.setTool('text'));
+                
+                // 历史操作
+                document.getElementById('undoBtn').addEventListener('click', () => this.undo());
+                document.getElementById('redoBtn').addEventListener('click', () => this.redo());
+                
+                // 模板
+                document.getElementById('templateBtn').addEventListener('click', () => this.showTemplateModal());
+                
+                // 顶部工具栏
+                document.getElementById('themeSelector').addEventListener('change', (e) => this.changeTheme(e.target.value));
+                document.getElementById('gridToggle').addEventListener('click', () => this.toggleGrid());
+                document.getElementById('snapToggle').addEventListener('click', () => this.toggleSnap());
+                
+                // 文件操作
+                document.getElementById('saveBtn').addEventListener('click', () => this.saveProject());
+                document.getElementById('loadBtn').addEventListener('click', () => this.loadProject());
+                document.getElementById('exportBtn').addEventListener('click', () => this.exportCanvas());
+                document.getElementById('shareBtn').addEventListener('click', () => this.shareProject());
+                
+                // 缩放控制
+                document.getElementById('zoomIn').addEventListener('click', () => this.zoomIn());
+                document.getElementById('zoomOut').addEventListener('click', () => this.zoomOut());
+                document.getElementById('zoomFit').addEventListener('click', () => this.zoomToFit());
+                document.getElementById('zoomReset').addEventListener('click', () => this.resetZoom());
+            }
+            
+            setupKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        switch (e.key) {
+                            case 'z':
+                                e.preventDefault();
+                                if (e.shiftKey) {
+                                    this.redo();
+                                } else {
+                                    this.undo();
+                                }
+                                break;
+                            case 'y':
+                                e.preventDefault();
+                                this.redo();
+                                break;
+                            case 'c':
+                                e.preventDefault();
+                                this.copySelected();
+                                break;
+                            case 'v':
+                                e.preventDefault();
+                                this.paste();
+                                break;
+                            case 'a':
+                                e.preventDefault();
+                                this.selectAll();
+                                break;
+                            case 's':
+                                e.preventDefault();
+                                this.saveProject();
+                                break;
+                            case 'o':
+                                e.preventDefault();
+                                this.loadProject();
+                                break;
+                            case 'g':
+                                e.preventDefault();
+                                this.groupSelected();
+                                break;
+                            case 'd':
+                                e.preventDefault();
+                                this.duplicateSelected();
+                                break;
+                        }
+                    } else {
+                        switch (e.key) {
+                            case 'Delete':
+                            case 'Backspace':
+                                this.deleteSelected();
+                                break;
+                            case 'v':
+                                this.setTool('select');
+                                break;
+                            case 'm':
+                                this.setTool('move');
+                                break;
+                            case 'c':
+                                this.setTool('connect');
+                                break;
+                            case 't':
+                                this.setTool('text');
+                                break;
+                            case 'Escape':
+                                this.selectedElements = [];
+                                this.isConnecting = false;
+                                this.connectionStart = null;
+                                this.render();
+                                break;
+                        }
+                    }
+                });
+            }
+            
+            setupTemplates() {
+                const templates = [
+                    { name: 'Transformer 架构', category: 'LLM', icon: 'fas fa-magic' },
+                    { name: 'BERT 模型', category: 'LLM', icon: 'fas fa-brain' },
+                    { name: 'GPT 架构', category: 'LLM', icon: 'fas fa-robot' },
+                    { name: 'ResNet 网络', category: 'CNN', icon: 'fas fa-layer-group' },
+                    { name: 'YOLO 检测器', category: 'Detection', icon: 'fas fa-search' },
+                    { name: 'CLIP 模型', category: 'Multimodal', icon: 'fas fa-link' },
+                    { name: 'U-Net 架构', category: 'CNN', icon: 'fas fa-project-diagram' },
+                    { name: 'GAN 网络', category: 'Generative', icon: 'fas fa-magic' }
+                ];
+                
+                const templateGrid = document.getElementById('templateGrid');
+                templates.forEach(template => {
+                    const item = document.createElement('div');
+                    item.className = 'template-item';
+                    item.innerHTML = `
+                        <i class="${template.icon} text-2xl text-blue-400 mb-2"></i>
+                        <h4 class="font-semibold text-white">${template.name}</h4>
+                        <p class="text-sm text-gray-400">${template.category}</p>
+                    `;
+                    item.addEventListener('click', () => this.applyTemplate(template));
+                    templateGrid.appendChild(item);
+                });
+                
+                document.getElementById('closeTemplateModal').addEventListener('click', () => {
+                    document.getElementById('templateModal').style.display = 'none';
+                });
+            }
+            
+            // 核心渲染方法
+            render() {
+                this.clearCanvas();
+                
+                this.ctx.save();
+                this.ctx.scale(this.scale, this.scale);
+                this.ctx.translate(this.offsetX, this.offsetY);
+                
+                // 绘制网格
+                if (this.showGrid) {
+                    this.drawGrid();
+                }
+                
+                // 绘制连接线
+                this.connections.forEach(connection => {
+                    this.drawConnection(connection);
+                });
+                
+                // 绘制元素
+                this.elements.forEach(element => {
+                    if (element.visible !== false) {
+                        this.drawElement(element);
+                    }
+                });
+                
+                // 绘制选择框
+                this.selectedElements.forEach(element => {
+                    this.drawSelection(element);
+                });
+                
+                // 绘制连接预览
+                if (this.isConnecting && this.connectionStart) {
+                    this.drawConnectionPreview();
+                }
+                
+                this.ctx.restore();
+                
+                // 更新小地图
+                this.updateMinimap();
+            }
+            
+            clearCanvas() {
+                this.ctx.fillStyle = this.themes[this.currentTheme].background;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            drawGrid() {
+                const gridSize = this.gridSize;
+                const startX = Math.floor(-this.offsetX / gridSize) * gridSize;
+                const startY = Math.floor(-this.offsetY / gridSize) * gridSize;
+                const endX = startX + this.canvas.width / this.scale + gridSize;
+                const endY = startY + this.canvas.height / this.scale + gridSize;
+                
+                this.ctx.strokeStyle = this.themes[this.currentTheme].grid;
+                this.ctx.lineWidth = 0.5;
+                this.ctx.globalAlpha = 0.5;
+                
+                for (let x = startX; x <= endX; x += gridSize) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, startY);
+                    this.ctx.lineTo(x, endY);
+                    this.ctx.stroke();
+                }
+                
+                for (let y = startY; y <= endY; y += gridSize) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(startX, y);
+                    this.ctx.lineTo(endX, y);
+                    this.ctx.stroke();
+                }
+                
+                this.ctx.globalAlpha = 1;
+            }
+            
+            drawElement(element) {
+                this.ctx.save();
+                
+                // 应用透明度
+                this.ctx.globalAlpha = (element.opacity || 100) / 100;
+                
+                // 应用旋转
+                if (element.rotation) {
+                    this.ctx.translate(element.x + element.width / 2, element.y + element.height / 2);
+                    this.ctx.rotate(element.rotation * Math.PI / 180);
+                    this.ctx.translate(-element.width / 2, -element.height / 2);
+                } else {
+                    this.ctx.translate(element.x, element.y);
+                }
+                
+                // 设置样式
+                this.ctx.fillStyle = element.fillColor || '#3b82f6';
+                this.ctx.strokeStyle = element.strokeColor || '#1e40af';
+                this.ctx.lineWidth = element.strokeWidth || 2;
+                
+                // 绘制形状
+                this.drawShape(element);
+                
+                // 绘制文本
+                if (element.text) {
+                    this.drawElementText(element);
+                }
+                
+                this.ctx.restore();
+            }
+            
+            drawShape(element) {
+                const w = element.width;
+                const h = element.height;
+                
+                this.ctx.beginPath();
+                
+                switch (element.type) {
+                    case 'rectangle':
+                    case 'token':
+                    case 'embedding':
+                    case 'linear':
+                    case 'conv1d':
+                    case 'conv2d':
+                    case 'dense':
+                    case 'transformer':
+                    case 'encoder':
+                    case 'decoder':
+                    case 'text-encoder':
+                    case 'vision-encoder':
+                    case 'audio-encoder':
+                        this.ctx.rect(0, 0, w, h);
+                        break;
+                        
+                    case 'circle':
+                        const radius = Math.min(w, h) / 2;
+                        this.ctx.arc(w / 2, h / 2, radius, 0, 2 * Math.PI);
+                        break;
+                        
+                    case 'ellipse':
+                        this.ctx.ellipse(w / 2, h / 2, w / 2, h / 2, 0, 0, 2 * Math.PI);
+                        break;
+                        
+                    case 'triangle':
+                        this.ctx.moveTo(w / 2, 0);
+                        this.ctx.lineTo(0, h);
+                        this.ctx.lineTo(w, h);
+                        this.ctx.closePath();
+                        break;
+                        
+                    case 'diamond':
+                    case 'attention':
+                    case 'self-attention':
+                    case 'multi-head':
+                    case 'cross-attention':
+                        this.ctx.moveTo(w / 2, 0);
+                        this.ctx.lineTo(w, h / 2);
+                        this.ctx.lineTo(w / 2, h);
+                        this.ctx.lineTo(0, h / 2);
+                        this.ctx.closePath();
+                        break;
+                        
+                    case 'pentagon':
+                        this.drawPolygon(5, w, h);
+                        break;
+                        
+                    case 'hexagon':
+                        this.drawPolygon(6, w, h);
+                        break;
+                        
+                    case 'star':
+                        this.drawStar(w, h);
+                        break;
+                        
+                    case 'arrow':
+                        this.drawArrow(w, h);
+                        break;
+                        
+                    default:
+                        this.ctx.rect(0, 0, w, h);
+                        break;
+                }
+                
+                this.ctx.fill();
+                this.ctx.stroke();
+            }
+            
+            drawPolygon(sides, width, height) {
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = Math.min(width, height) / 2;
+                
+                for (let i = 0; i < sides; i++) {
+                    const angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
+                    const x = centerX + radius * Math.cos(angle);
+                    const y = centerY + radius * Math.sin(angle);
+                    
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                this.ctx.closePath();
+            }
+            
+            drawStar(width, height) {
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const outerRadius = Math.min(width, height) / 2;
+                const innerRadius = outerRadius * 0.4;
+                const spikes = 5;
+                
+                for (let i = 0; i < spikes * 2; i++) {
+                    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                    const angle = (i * Math.PI) / spikes - Math.PI / 2;
+                    const x = centerX + radius * Math.cos(angle);
+                    const y = centerY + radius * Math.sin(angle);
+                    
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                this.ctx.closePath();
+            }
+            
+            drawArrow(width, height) {
+                const headWidth = width * 0.3;
+                const headHeight = height;
+                const bodyWidth = width * 0.7;
+                const bodyHeight = height * 0.5;
+                const bodyY = (height - bodyHeight) / 2;
+                
+                this.ctx.moveTo(0, bodyY);
+                this.ctx.lineTo(bodyWidth, bodyY);
+                this.ctx.lineTo(bodyWidth, 0);
+                this.ctx.lineTo(width, height / 2);
+                this.ctx.lineTo(bodyWidth, height);
+                this.ctx.lineTo(bodyWidth, bodyY + bodyHeight);
+                this.ctx.lineTo(0, bodyY + bodyHeight);
+                this.ctx.closePath();
+            }
+            
+            drawElementText(element) {
+                if (!element.text) return;
+                
+                this.ctx.fillStyle = element.textColor || '#ffffff';
+                this.ctx.font = `${element.fontSize || 14}px ${element.fontFamily || 'Arial'}`;
+                this.ctx.textAlign = element.textAlign || 'center';
+                this.ctx.textBaseline = 'middle';
+                
+                const textX = element.width / 2;
+                const textY = element.height / 2;
+                
+                // 处理多行文本
+                const lines = element.text.split('\n');
+                const lineHeight = (element.fontSize || 14) * 1.2;
+                const totalHeight = lines.length * lineHeight;
+                const startY = textY - totalHeight / 2 + lineHeight / 2;
+                
+                lines.forEach((line, index) => {
+                    this.ctx.fillText(line, textX, startY + index * lineHeight);
+                });
+            }
+            
+            drawSelection(element) {
+                this.ctx.save();
+                this.ctx.translate(element.x, element.y);
+                
+                if (element.rotation) {
+                    this.ctx.translate(element.width / 2, element.height / 2);
+                    this.ctx.rotate(element.rotation * Math.PI / 180);
+                    this.ctx.translate(-element.width / 2, -element.height / 2);
+                }
+                
+                this.ctx.strokeStyle = '#fbbf24';
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([8, 4]);
+                this.ctx.strokeRect(-4, -4, element.width + 8, element.height + 8);
+                this.ctx.setLineDash([]);
+                
+                // 绘制控制点
+                this.drawControlPoints(element);
+                
+                this.ctx.restore();
+            }
+            
+            drawControlPoints(element) {
+                const points = [
+                    { x: -4, y: -4 },
+                    { x: element.width / 2, y: -4 },
+                    { x: element.width + 4, y: -4 },
+                    { x: element.width + 4, y: element.height / 2 },
+                    { x: element.width + 4, y: element.height + 4 },
+                    { x: element.width / 2, y: element.height + 4 },
+                    { x: -4, y: element.height + 4 },
+                    { x: -4, y: element.height / 2 }
+                ];
+                
+                this.ctx.fillStyle = '#fbbf24';
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 1;
+                
+                points.forEach(point => {
+                    this.ctx.fillRect(point.x - 3, point.y - 3, 6, 6);
+                    this.ctx.strokeRect(point.x - 3, point.y - 3, 6, 6);
+                });
+            }
+            
+            drawConnection(connection) {
+                const start = this.getConnectionPoint(connection.from, connection.fromSide);
+                const end = this.getConnectionPoint(connection.to, connection.toSide);
+                
+                this.ctx.strokeStyle = connection.color || '#60a5fa';
+                this.ctx.lineWidth = connection.width || 2;
+                this.ctx.setLineDash(connection.dashArray || []);
+                
+                this.ctx.beginPath();
+                
+                if (connection.style === 'curved') {
+                    this.drawCurvedConnection(start, end);
+                } else if (connection.style === 'orthogonal') {
+                    this.drawOrthogonalConnection(start, end);
+                } else {
+                    this.ctx.moveTo(start.x, start.y);
+                    this.ctx.lineTo(end.x, end.y);
+                }
+                
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+                
+                // 绘制箭头
+                if (connection.arrow !== false) {
+                    this.drawArrowHead(start, end);
+                }
+            }
+            
+            drawCurvedConnection(start, end) {
+                const cp1x = start.x + (end.x - start.x) * 0.5;
+                const cp1y = start.y;
+                const cp2x = start.x + (end.x - start.x) * 0.5;
+                const cp2y = end.y;
+                
+                this.ctx.moveTo(start.x, start.y);
+                this.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, end.x, end.y);
+            }
+            
+            drawOrthogonalConnection(start, end) {
+                const midX = start.x + (end.x - start.x) * 0.5;
+                
+                this.ctx.moveTo(start.x, start.y);
+                this.ctx.lineTo(midX, start.y);
+                this.ctx.lineTo(midX, end.y);
+                this.ctx.lineTo(end.x, end.y);
+            }
+            
+            drawArrowHead(start, end) {
+                const angle = Math.atan2(end.y - start.y, end.x - start.x);
+                const headLength = 15;
+                const headAngle = Math.PI / 6;
+                
+                this.ctx.save();
+                this.ctx.translate(end.x, end.y);
+                this.ctx.rotate(angle);
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, 0);
+                this.ctx.lineTo(-headLength, -headLength * Math.tan(headAngle));
+                this.ctx.lineTo(-headLength, headLength * Math.tan(headAngle));
+                this.ctx.closePath();
+                this.ctx.fill();
+                
+                this.ctx.restore();
+            }
+            
+            drawConnectionPreview() {
+                if (!this.connectionStart || !this.mousePos) return;
+                
+                this.ctx.strokeStyle = '#60a5fa';
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([5, 5]);
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.connectionStart.x, this.connectionStart.y);
+                this.ctx.lineTo(this.mousePos.x, this.mousePos.y);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+            }
+            
+            updateMinimap() {
+                if (!this.minimapCtx) return;
+                
+                this.minimapCtx.fillStyle = this.themes[this.currentTheme].background;
+                this.minimapCtx.fillRect(0, 0, this.minimapCanvas.width, this.minimapCanvas.height);
+                
+                if (this.elements.length === 0) return;
+                
+                // 计算缩放比例
+                const bounds = this.getElementsBounds();
+                const scaleX = this.minimapCanvas.width / bounds.width;
+                const scaleY = this.minimapCanvas.height / bounds.height;
+                const scale = Math.min(scaleX, scaleY, 1) * 0.8;
+                
+                this.minimapCtx.save();
+                this.minimapCtx.scale(scale, scale);
+                this.minimapCtx.translate(-bounds.x + (this.minimapCanvas.width / scale - bounds.width) / 2,
+                                         -bounds.y + (this.minimapCanvas.height / scale - bounds.height) / 2);
+                
+                // 绘制元素
+                this.elements.forEach(element => {
+                    if (element.visible !== false) {
+                        this.minimapCtx.fillStyle = element.fillColor || '#3b82f6';
+                        this.minimapCtx.fillRect(element.x, element.y, element.width, element.height);
+                    }
+                });
+                
+                this.minimapCtx.restore();
+            }
+            
+            // 事件处理方法
+            handleMouseDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / this.scale - this.offsetX;
+                const y = (e.clientY - rect.top) / this.scale - this.offsetY;
+                
+                this.dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                this.mousePos = { x, y };
+                
+                if (this.currentTool === 'connect') {
+                    this.handleConnectionStart(x, y);
+                    return;
+                }
+                
+                const clickedElement = this.getElementAt(x, y);
+                
+                if (clickedElement) {
+                    if (!e.ctrlKey && !e.metaKey) {
+                        if (!this.selectedElements.includes(clickedElement)) {
+                            this.selectedElements = [clickedElement];
+                        }
+                    } else {
+                        const index = this.selectedElements.indexOf(clickedElement);
+                        if (index > -1) {
+                            this.selectedElements.splice(index, 1);
+                        } else {
+                            this.selectedElements.push(clickedElement);
+                        }
+                    }
+                    
+                    if (this.currentTool === 'select' || this.currentTool === 'move') {
+                        this.isDragging = true;
+                    }
+                } else {
+                    this.selectedElements = [];
+                }
+                
+                this.updatePropertyPanel();
+                this.render();
+            }
+            
+            handleMouseMove(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / this.scale - this.offsetX;
+                const y = (e.clientY - rect.top) / this.scale - this.offsetY;
+                
+                this.mousePos = { x, y };
+                
+                if (this.isDragging && this.selectedElements.length > 0) {
+                    const dx = (e.clientX - rect.left - this.dragStart.x) / this.scale;
+                    const dy = (e.clientY - rect.top - this.dragStart.y) / this.scale;
+                    
+                    this.selectedElements.forEach(element => {
+                        if (!element.locked) {
+                            element.x += dx;
+                            element.y += dy;
+                            
+                            if (this.snapToGrid) {
+                                element.x = Math.round(element.x / this.gridSize) * this.gridSize;
+                                element.y = Math.round(element.y / this.gridSize) * this.gridSize;
+                            }
+                        }
+                    });
+                    
+                    this.dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                    this.updatePropertyPanel();
+                    this.render();
+                } else if (this.isConnecting) {
+                    this.render();
+                } else {
+                    // 更新悬停效果
+                    const hoveredElement = this.getElementAt(x, y);
+                    if (hoveredElement !== this.hoveredElement) {
+                        this.hoveredElement = hoveredElement;
+                        this.canvas.style.cursor = hoveredElement ? 'pointer' : 'default';
+                    }
+                }
+            }
+            
+            handleMouseUp(e) {
+                if (this.isDragging) {
+                    this.isDragging = false;
+                    this.saveState();
+                }
+                
+                if (this.isConnecting) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = (e.clientX - rect.left) / this.scale - this.offsetX;
+                    const y = (e.clientY - rect.top) / this.scale - this.offsetY;
+                    this.handleConnectionEnd(x, y);
+                }
+            }
+            
+            handleWheel(e) {
+                e.preventDefault();
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.max(0.1, Math.min(5, this.scale * delta));
+                
+                // 缩放到鼠标位置
+                const scaleRatio = newScale / this.scale;
+                this.offsetX = mouseX / newScale - (mouseX / this.scale - this.offsetX) * scaleRatio;
+                this.offsetY = mouseY / newScale - (mouseY / this.scale - this.offsetY) * scaleRatio;
+                this.scale = newScale;
+                
+                this.render();
+            }
+            
+            handleDoubleClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / this.scale - this.offsetX;
+                const y = (e.clientY - rect.top) / this.scale - this.offsetY;
+                
+                const clickedElement = this.getElementAt(x, y);
+                if (clickedElement) {
+                    this.editElementText(clickedElement);
+                }
+            }
+            
+            handleContextMenu(e) {
+                e.preventDefault();
+                
+                const contextMenu = document.getElementById('contextMenu');
+                contextMenu.style.left = e.clientX + 'px';
+                contextMenu.style.top = e.clientY + 'px';
+                contextMenu.style.display = 'block';
+                
+                // 添加上下文菜单事件监听
+                contextMenu.addEventListener('click', (event) => {
+                    const action = event.target.closest('.context-menu-item')?.dataset.action;
+                    if (action) {
+                        this.executeContextAction(action);
+                        this.hideContextMenu();
+                    }
+                });
+            }
+            
+            handleDrop(e) {
+                e.preventDefault();
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / this.scale - this.offsetX;
+                const y = (e.clientY - rect.top) / this.scale - this.offsetY;
+                const componentType = e.dataTransfer.getData('text/plain');
+                
+                this.createElement(componentType, x, y);
+            }
+            
+            handleConnectionStart(x, y) {
+                const element = this.getElementAt(x, y);
+                if (element) {
+                    const side = this.getConnectionSide(element, x, y);
+                    this.connectionStart = this.getConnectionPoint(element, side);
+                    this.connectionStart.element = element;
+                    this.connectionStart.side = side;
+                    this.isConnecting = true;
+                }
+            }
+            
+            handleConnectionEnd(x, y) {
+                const element = this.getElementAt(x, y);
+                if (element && element !== this.connectionStart.element) {
+                    const side = this.getConnectionSide(element, x, y);
+                    const connection = {
+                        id: Date.now(),
+                        from: this.connectionStart.element,
+                        fromSide: this.connectionStart.side,
+                        to: element,
+                        toSide: side,
+                        color: '#60a5fa',
+                        width: 2,
+                        style: 'orthogonal'
+                    };
+                    
+                    this.connections.push(connection);
+                    this.saveState();
+                }
+                
+                this.isConnecting = false;
+                this.connectionStart = null;
+                this.render();
+            }
+            
+            // 工具方法
+            getElementAt(x, y) {
+                for (let i = this.elements.length - 1; i >= 0; i--) {
+                    const element = this.elements[i];
+                    if (element.visible !== false && this.isPointInElement(x, y, element)) {
+                        return element;
+                    }
+                }
+                return null;
+            }
+            
+            isPointInElement(x, y, element) {
+                return x >= element.x && x <= element.x + element.width &&
+                       y >= element.y && y <= element.y + element.height;
+            }
+            
+            getConnectionPoint(element, side) {
+                switch (side) {
+                    case 'top':
+                        return { x: element.x + element.width / 2, y: element.y };
+                    case 'right':
+                        return { x: element.x + element.width, y: element.y + element.height / 2 };
+                    case 'bottom':
+                        return { x: element.x + element.width / 2, y: element.y + element.height };
+                    case 'left':
+                        return { x: element.x, y: element.y + element.height / 2 };
+                    default:
+                        return { x: element.x + element.width / 2, y: element.y + element.height / 2 };
+                }
+            }
+            
+            getConnectionSide(element, x, y) {
+                const centerX = element.x + element.width / 2;
+                const centerY = element.y + element.height / 2;
+                const dx = x - centerX;
+                const dy = y - centerY;
+                
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    return dx > 0 ? 'right' : 'left';
+                } else {
+                    return dy > 0 ? 'bottom' : 'top';
+                }
+            }
+            
+            createElement(type, x, y) {
+                const element = {
+                    id: Date.now(),
+                    type: type,
+                    x: this.snapToGrid ? Math.round(x / this.gridSize) * this.gridSize : x,
+                    y: this.snapToGrid ? Math.round(y / this.gridSize) * this.gridSize : y,
+                    width: 120,
+                    height: 60,
+                    text: this.getDefaultText(type),
+                    fillColor: '#3b82f6',
+                    strokeColor: '#1e40af',
+                    strokeWidth: 2,
+                    textColor: '#ffffff',
+                    fontSize: 14,
+                    fontFamily: 'Arial',
+                    textAlign: 'center',
+                    opacity: 100,
+                    rotation: 0,
+                    visible: true,
+                    locked: false
+                };
+                
+                this.elements.push(element);
+                this.selectedElements = [element];
+                this.updatePropertyPanel();
+                this.saveState();
+                this.render();
+            }
+            
+            getDefaultText(type) {
+                const textMap = {
+                    'rectangle': '矩形',
+                    'circle': '圆形',
+                    'triangle': '三角形',
+                    'diamond': '菱形',
+                    'token': 'Token',
+                    'embedding': 'Embedding',
+                    'relu': 'ReLU',
+                    'gelu': 'GELU',
+                    'self-attention': 'Self-Attention',
+                    'multi-head': 'Multi-Head\nAttention',
+                    'transformer': 'Transformer',
+                    'encoder': 'Encoder',
+                    'decoder': 'Decoder',
+                    'conv2d': 'Conv2D',
+                    'linear': 'Linear',
+                    'pooling': 'Pooling'
+                };
+                
+                return textMap[type] || type;
+            }
+            
+            getElementsBounds() {
+                if (this.elements.length === 0) {
+                    return { x: 0, y: 0, width: 100, height: 100 };
+                }
+                
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                
+                this.elements.forEach(element => {
+                    minX = Math.min(minX, element.x);
+                    minY = Math.min(minY, element.y);
+                    maxX = Math.max(maxX, element.x + element.width);
+                    maxY = Math.max(maxY, element.y + element.height);
+                });
+                
+                return {
+                    x: minX,
+                    y: minY,
+                    width: maxX - minX,
+                    height: maxY - minY
+                };
+            }
+            
+            // 工具栏方法
+            setTool(tool) {
+                this.currentTool = tool;
+                
+                // 更新工具按钮状态
+                document.querySelectorAll('.tool-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.getElementById(tool + 'Tool')?.classList.add('active');
+                
+                // 重置状态
+                this.isConnecting = false;
+                this.connectionStart = null;
+                
+                // 更新光标
+                const cursors = {
+                    'select': 'default',
+                    'move': 'move',
+                    'connect': 'crosshair',
+                    'text': 'text'
+                };
+                this.canvas.style.cursor = cursors[tool] || 'default';
+                
+                this.render();
+            }
+            
+            // 编辑操作
+            editElementText(element) {
+                const newText = prompt('输入文本:', element.text || '');
+                if (newText !== null) {
+                    element.text = newText;
+                    this.updatePropertyPanel();
+                    this.saveState();
+                    this.render();
+                }
+            }
+            
+            updateSelectedProperties(e) {
+                if (this.selectedElements.length === 0) return;
+                
+                const property = e.target.id.replace('prop-', '').replace('-', '');
+                let value = e.target.value;
+                
+                // 转换数值类型
+                if (e.target.type === 'number' || e.target.type === 'range') {
+                    value = parseFloat(value);
+                }
+                
+                // 属性映射
+                const propertyMap = {
+                    'name': 'text',
+                    'fill': 'fillColor',
+                    'stroke': 'strokeColor',
+                    'strokewidth': 'strokeWidth',
+                    'textcolor': 'textColor',
+                    'fontsize': 'fontSize',
+                    'textalign': 'textAlign'
+                };
+                
+                const actualProperty = propertyMap[property] || property;
+                
+                this.selectedElements.forEach(element => {
+                    element[actualProperty] = value;
+                });
+                
+                this.render();
+            }
+            
+            updatePropertyPanel() {
+                if (this.selectedElements.length === 1) {
+                    const element = this.selectedElements[0];
+                    
+                    document.getElementById('prop-name').value = element.text || '';
+                    document.getElementById('prop-fill').value = element.fillColor || '#3b82f6';
+                    document.getElementById('prop-stroke').value = element.strokeColor || '#1e40af';
+                    document.getElementById('prop-stroke-width').value = element.strokeWidth || 2;
+                    document.getElementById('prop-opacity').value = element.opacity || 100;
+                    document.getElementById('prop-x').value = Math.round(element.x);
+                    document.getElementById('prop-y').value = Math.round(element.y);
+                    document.getElementById('prop-width').value = element.width;
+                    document.getElementById('prop-height').value = element.height;
+                    document.getElementById('prop-rotation').value = element.rotation || 0;
+                    document.getElementById('prop-text').value = element.text || '';
+                    document.getElementById('prop-font-size').value = element.fontSize || 14;
+                    document.getElementById('prop-text-color').value = element.textColor || '#ffffff';
+                    document.getElementById('prop-text-align').value = element.textAlign || 'center';
+                }
+            }
+            
+            // 操作方法
+            duplicateSelected() {
+                if (this.selectedElements.length === 0) return;
+                
+                const newElements = [];
+                this.selectedElements.forEach(element => {
+                    const newElement = { ...element };
+                    newElement.id = Date.now() + Math.random();
+                    newElement.x += 20;
+                    newElement.y += 20;
+                    this.elements.push(newElement);
+                    newElements.push(newElement);
+                });
+                
+                this.selectedElements = newElements;
+                this.updatePropertyPanel();
+                this.saveState();
+                this.render();
+            }
+            
+            deleteSelected() {
+                if (this.selectedElements.length === 0) return;
+                
+                this.selectedElements.forEach(element => {
+                    const index = this.elements.indexOf(element);
+                    if (index > -1) {
+                        this.elements.splice(index, 1);
+                    }
+                    
+                    // 删除相关连接
+                    this.connections = this.connections.filter(conn => 
+                        conn.from !== element && conn.to !== element
+                    );
+                });
+                
+                this.selectedElements = [];
+                this.updatePropertyPanel();
+                this.saveState();
+                this.render();
+            }
+            
+            copySelected() {
+                if (this.selectedElements.length === 0) return;
+                
+                this.clipboard = this.selectedElements.map(element => ({ ...element }));
+            }
+            
+            paste() {
+                if (this.clipboard.length === 0) return;
+                
+                const newElements = [];
+                this.clipboard.forEach(element => {
+                    const newElement = { ...element };
+                    newElement.id = Date.now() + Math.random();
+                    newElement.x += 20;
+                    newElement.y += 20;
+                    this.elements.push(newElement);
+                    newElements.push(newElement);
+                });
+                
+                this.selectedElements = newElements;
+                this.updatePropertyPanel();
+                this.saveState();
+                this.render();
+            }
+            
+            selectAll() {
+                this.selectedElements = [...this.elements];
+                this.updatePropertyPanel();
+                this.render();
+            }
+            
+            groupSelected() {
+                if (this.selectedElements.length < 2) return;
+                
+                // 创建组对象
+                const group = {
+                    id: Date.now(),
+                    type: 'group',
+                    elements: [...this.selectedElements],
+                    x: Math.min(...this.selectedElements.map(e => e.x)),
+                    y: Math.min(...this.selectedElements.map(e => e.y)),
+                    width: Math.max(...this.selectedElements.map(e => e.x + e.width)) - Math.min(...this.selectedElements.map(e => e.x)),
+                    height: Math.max(...this.selectedElements.map(e => e.y + e.height)) - Math.min(...this.selectedElements.map(e => e.y))
+                };
+                
+                // 从elements中移除组成员
+                this.selectedElements.forEach(element => {
+                    const index = this.elements.indexOf(element);
+                    if (index > -1) {
+                        this.elements.splice(index, 1);
+                    }
+                });
+                
+                this.elements.push(group);
+                this.selectedElements = [group];
+                this.saveState();
+                this.render();
+            }
+            
+            ungroupSelected() {
+                if (this.selectedElements.length !== 1 || this.selectedElements[0].type !== 'group') return;
+                
+                const group = this.selectedElements[0];
+                const index = this.elements.indexOf(group);
+                
+                if (index > -1) {
+                    this.elements.splice(index, 1);
+                    this.elements.push(...group.elements);
+                    this.selectedElements = [...group.elements];
+                }
+                
+                this.saveState();
+                this.render();
+            }
+            
+            bringToFront() {
+                if (this.selectedElements.length === 0) return;
+                
+                this.selectedElements.forEach(element => {
+                    const index = this.elements.indexOf(element);
+                    if (index > -1) {
+                        this.elements.splice(index, 1);
+                        this.elements.push(element);
+                    }
+                });
+                
+                this.saveState();
+                this.render();
+            }
+            
+            sendToBack() {
+                if (this.selectedElements.length === 0) return;
+                
+                this.selectedElements.forEach(element => {
+                    const index = this.elements.indexOf(element);
+                    if (index > -1) {
+                        this.elements.splice(index, 1);
+                        this.elements.unshift(element);
+                    }
+                });
+                
+                this.saveState();
+                this.render();
+            }
+            
+            toggleLock() {
+                if (this.selectedElements.length === 0) return;
+                
+                const isLocked = this.selectedElements[0].locked;
+                this.selectedElements.forEach(element => {
+                    element.locked = !isLocked;
+                });
+                
+                this.saveState();
+                this.render();
+            }
+            
+            toggleVisibility() {
+                if (this.selectedElements.length === 0) return;
+                
+                const isVisible = this.selectedElements[0].visible !== false;
+                this.selectedElements.forEach(element => {
+                    element.visible = !isVisible;
+                });
+                
+                this.saveState();
+                this.render();
+            }
+            
+            // 主题和视图控制
+            changeTheme(theme) {
+                this.currentTheme = theme;
+                this.render();
+            }
+            
+            toggleGrid() {
+                this.showGrid = !this.showGrid;
+                document.getElementById('gridToggle').classList.toggle('active');
+                this.render();
+            }
+            
+            toggleSnap() {
+                this.snapToGrid = !this.snapToGrid;
+                document.getElementById('snapToggle').classList.toggle('active');
+            }
+            
+            // 缩放控制
+            zoomIn() {
+                this.scale = Math.min(5, this.scale * 1.2);
+                this.render();
+            }
+            
+            zoomOut() {
+                this.scale = Math.max(0.1, this.scale / 1.2);
+                this.render();
+            }
+            
+            zoomToFit() {
+                if (this.elements.length === 0) return;
+                
+                const bounds = this.getElementsBounds();
+                const padding = 50;
+                
+                const scaleX = (this.canvas.width - padding * 2) / bounds.width;
+                const scaleY = (this.canvas.height - padding * 2) / bounds.height;
+                this.scale = Math.min(scaleX, scaleY, 1);
+                
+                this.offsetX = (this.canvas.width / this.scale - bounds.width) / 2 - bounds.x;
+                this.offsetY = (this.canvas.height / this.scale - bounds.height) / 2 - bounds.y;
+                
+                this.render();
+            }
+            
+            resetZoom() {
+                this.scale = 1;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                this.render();
+            }
+            
+            // 历史操作
+            saveState() {
+                this.history = this.history.slice(0, this.historyIndex + 1);
+                this.history.push({
+                    elements: JSON.parse(JSON.stringify(this.elements)),
+                    connections: JSON.parse(JSON.stringify(this.connections))
+                });
+                this.historyIndex++;
+                
+                // 限制历史记录数量
+                if (this.history.length > 50) {
+                    this.history.shift();
+                    this.historyIndex--;
+                }
+            }
+            
+            undo() {
+                if (this.historyIndex > 0) {
+                    this.historyIndex--;
+                    const state = this.history[this.historyIndex];
+                    this.elements = JSON.parse(JSON.stringify(state.elements));
+                    this.connections = JSON.parse(JSON.stringify(state.connections));
+                    this.selectedElements = [];
+                    this.updatePropertyPanel();
+                    this.render();
+                }
+            }
+            
+            redo() {
+                if (this.historyIndex < this.history.length - 1) {
+                    this.historyIndex++;
+                    const state = this.history[this.historyIndex];
+                    this.elements = JSON.parse(JSON.stringify(state.elements));
+                    this.connections = JSON.parse(JSON.stringify(state.connections));
+                    this.selectedElements = [];
+                    this.updatePropertyPanel();
+                    this.render();
+                }
+            }
+            
+            // 文件操作
+            saveProject() {
+                const projectData = {
+                    version: '1.0',
+                    elements: this.elements,
+                    connections: this.connections,
+                    settings: {
+                        theme: this.currentTheme,
+                        showGrid: this.showGrid,
+                        snapToGrid: this.snapToGrid,
+                        gridSize: this.gridSize
+                    }
+                };
+                
+                const dataStr = JSON.stringify(projectData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+                
+                const exportFileDefaultName = 'ai-architecture-' + new Date().toISOString().slice(0, 10) + '.json';
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+            }
+            
+            loadProject() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const projectData = JSON.parse(e.target.result);
+                            this.elements = projectData.elements || [];
+                            this.connections = projectData.connections || [];
+                            
+                            if (projectData.settings) {
+                                this.currentTheme = projectData.settings.theme || 'dark';
+                                this.showGrid = projectData.settings.showGrid !== false;
+                                this.snapToGrid = projectData.settings.snapToGrid !== false;
+                                this.gridSize = projectData.settings.gridSize || 20;
+                            }
+                            
+                            this.selectedElements = [];
+                            this.history = [];
+                            this.historyIndex = -1;
+                            this.saveState();
+                            this.updatePropertyPanel();
+                            this.render();
+                        } catch (error) {
+                            alert('文件格式错误！');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+            
+            exportCanvas() {
+                // 创建临时画布用于导出
+                const exportCanvas = document.createElement('canvas');
+                const bounds = this.getElementsBounds();
+                const padding = 50;
+                
+                exportCanvas.width = bounds.width + padding * 2;
+                exportCanvas.height = bounds.height + padding * 2;
+                const exportCtx = exportCanvas.getContext('2d');
+                
+                // 设置背景
+                exportCtx.fillStyle = this.themes[this.currentTheme].background;
+                exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+                
+                // 保存当前状态
+                const originalCtx = this.ctx;
+                const originalOffsetX = this.offsetX;
+                const originalOffsetY = this.offsetY;
+                const originalScale = this.scale;
+                
+                // 设置导出参数
+                this.ctx = exportCtx;
+                this.offsetX = -bounds.x + padding;
+                this.offsetY = -bounds.y + padding;
+                this.scale = 1;
+                
+                // 绘制内容
+                this.ctx.save();
+                this.ctx.scale(this.scale, this.scale);
+                this.ctx.translate(this.offsetX, this.offsetY);
+                
+                this.connections.forEach(connection => {
+                    this.drawConnection(connection);
+                });
+                
+                this.elements.forEach(element => {
+                    if (element.visible !== false) {
+                        this.drawElement(element);
+                    }
+                });
+                
+                this.ctx.restore();
+                
+                // 恢复原始状态
+                this.ctx = originalCtx;
+                this.offsetX = originalOffsetX;
+                this.offsetY = originalOffsetY;
+                this.scale = originalScale;
+                
+                // 下载图片
+                const link = document.createElement('a');
+                link.download = 'ai-architecture-' + new Date().toISOString().slice(0, 10) + '.png';
+                link.href = exportCanvas.toDataURL();
+                link.click();
+            }
+            
+            shareProject() {
+                // 生成分享链接（这里只是演示，实际需要后端支持）
+                const projectData = {
+                    elements: this.elements,
+                    connections: this.connections
+                };
+                
+                const dataStr = JSON.stringify(projectData);
+                const base64 = btoa(dataStr);
+                const shareUrl = window.location.origin + window.location.pathname + '?data=' + base64;
+                
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert('分享链接已复制到剪贴板！');
+                }).catch(() => {
+                    prompt('复制分享链接:', shareUrl);
+                });
+            }
+            
+            // 模板相关
+            showTemplateModal() {
+                document.getElementById('templateModal').style.display = 'flex';
+            }
+            
+            applyTemplate(template) {
+                // 根据模板名称应用不同的预设
+                this.elements = [];
+                this.connections = [];
+                
+                switch (template.name) {
+                    case 'Transformer 架构':
+                        this.createTransformerTemplate();
+                        break;
+                    case 'ResNet 网络':
+                        this.createResNetTemplate();
+                        break;
+                    case 'YOLO 检测器':
+                        this.createYOLOTemplate();
+                        break;
+                    default:
+                        this.createBasicTemplate();
+                        break;
+                }
+                
+                document.getElementById('templateModal').style.display = 'none';
+                this.saveState();
+                this.render();
+            }
+            
+            createTransformerTemplate() {
+                // 创建Transformer架构示例
+                const elements = [
+                    { type: 'embedding', x: 100, y: 100, text: 'Input\nEmbedding' },
+                    { type: 'positional-encoding', x: 100, y: 200, text: 'Positional\nEncoding' },
+                    { type: 'self-attention', x: 100, y: 300, text: 'Multi-Head\nAttention' },
+                    { type: 'layernorm', x: 300, y: 300, text: 'LayerNorm' },
+                    { type: 'linear', x: 100, y: 400, text: 'Feed Forward' },
+                    { type: 'layernorm', x: 300, y: 400, text: 'LayerNorm' },
+                    { type: 'linear', x: 100, y: 500, text: 'Output\nProjection' }
+                ];
+                
+                elements.forEach(el => {
+                    this.createElement(el.type, el.x, el.y);
+                    const element = this.elements[this.elements.length - 1];
+                    element.text = el.text;
+                });
+            }
+            
+            createResNetTemplate() {
+                // 创建ResNet架构示例
+                const elements = [
+                    { type: 'conv2d', x: 100, y: 100, text: 'Conv 7x7' },
+                    { type: 'maxpool', x: 100, y: 200, text: 'MaxPool' },
+                    { type: 'resnet-block', x: 100, y: 300, text: 'ResNet Block' },
+                    { type: 'resnet-block', x: 100, y: 400, text: 'ResNet Block' },
+                    { type: 'avgpool', x: 100, y: 500, text: 'Global AvgPool' },
+                    { type: 'linear', x: 100, y: 600, text: 'FC Layer' }
+                ];
+                
+                elements.forEach(el => {
+                    this.createElement(el.type, el.x, el.y);
+                    const element = this.elements[this.elements.length - 1];
+                    element.text = el.text;
+                });
+            }
+            
+            createYOLOTemplate() {
+                // 创建YOLO检测器示例
+                const elements = [
+                    { type: 'backbone', x: 100, y: 100, text: 'Backbone' },
+                    { type: 'fpn', x: 300, y: 100, text: 'FPN' },
+                    { type: 'yolo-head', x: 500, y: 100, text: 'Detection Head' },
+                    { type: 'nms', x: 700, y: 100, text: 'NMS' }
+                ];
+                
+                elements.forEach(el => {
+                    this.createElement(el.type, el.x, el.y);
+                    const element = this.elements[this.elements.length - 1];
+                    element.text = el.text;
+                });
+            }
+            
+            createBasicTemplate() {
+                // 创建基础模板
+                const elements = [
+                    { type: 'rectangle', x: 100, y: 100, text: '输入层' },
+                    { type: 'rectangle', x: 100, y: 200, text: '隐藏层' },
+                    { type: 'rectangle', x: 100, y: 300, text: '输出层' }
+                ];
+                
+                elements.forEach(el => {
+                    this.createElement(el.type, el.x, el.y);
+                    const element = this.elements[this.elements.length - 1];
+                    element.text = el.text;
+                });
+            }
+            
+            // 上下文菜单操作
+            executeContextAction(action) {
+                switch (action) {
+                    case 'copy':
+                        this.copySelected();
+                        break;
+                    case 'paste':
+                        this.paste();
+                        break;
+                    case 'delete':
+                        this.deleteSelected();
+                        break;
+                    case 'duplicate':
+                        this.duplicateSelected();
+                        break;
+                    case 'group':
+                        this.groupSelected();
+                        break;
+                    case 'ungroup':
+                        this.ungroupSelected();
+                        break;
+                }
+            }
+            
+            hideContextMenu(e) {
+                const contextMenu = document.getElementById('contextMenu');
+                if (e && contextMenu.contains(e.target)) return;
+                contextMenu.style.display = 'none';
+            }
+            
+            // 添加示例元素
+            addExampleElements() {
+                // 添加一些示例元素来演示功能
+                this.createElement('transformer', 200, 150);
+                this.elements[this.elements.length - 1].text = 'Transformer\nBlock';
+                
+                this.createElement('self-attention', 400, 100);
+                this.elements[this.elements.length - 1].text = 'Self-Attention';
+                
+                this.createElement('linear', 400, 200);
+                this.elements[this.elements.length - 1].text = 'Feed Forward';
+                
+                // 添加连接
+                if (this.elements.length >= 3) {
+                    this.connections.push({
+                        id: Date.now(),
+                        from: this.elements[0],
+                        fromSide: 'right',
+                        to: this.elements[1],
+                        toSide: 'left',
+                        color: '#60a5fa',
+                        width: 2,
+                        style: 'orthogonal'
+                    });
+                    
+                    this.connections.push({
+                        id: Date.now() + 1,
+                        from: this.elements[1],
+                        fromSide: 'bottom',
+                        to: this.elements[2],
+                        toSide: 'top',
+                        color: '#60a5fa',
+                        width: 2,
+                        style: 'orthogonal'
+                    });
+                }
+                
+                this.saveState();
+            }
+        }
+        
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            window.aiDesigner = new AIDesignerApp();
+        });
+    </script>
+</body>
+</html>
